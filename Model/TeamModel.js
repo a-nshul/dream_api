@@ -48,10 +48,10 @@ const validPlayers = [
 ];
 
 const TeamSchema = new mongoose.Schema({
-    teamName: {
-        type: String,
-        required: true,
-    },
+    teamName: [{
+       name:{ type: String,
+        required: true,}
+    }],
     players: [{
         name: {
             type: String,

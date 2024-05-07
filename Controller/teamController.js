@@ -8,6 +8,9 @@ const addTeam = asyncHandler(async (req, res) => {
         if (!teamName || !players || !captain || !viceCaptain) {
             return res.status(400).json({ message: "All fields are required" });
         }
+        if(teamName.length!==2){
+            return res.status(400).json({ message: 'Team name must be of 2 name' });
+        }
         if (players.length !== 9) {
             return res.status(400).json({ message: 'Team must have 9 players' });
         }
