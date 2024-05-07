@@ -55,7 +55,7 @@ const TeamSchema = new mongoose.Schema({
     players: [{
         name: {
             type: String,
-            // required: true,
+            required: true,
             enum: validPlayers
         },
         role: {
@@ -66,7 +66,7 @@ const TeamSchema = new mongoose.Schema({
     captain: {
         type: String,
         required: true,
-        // enum:validPlayers
+        enum:validPlayers
 
     },
     viceCaptain: {
