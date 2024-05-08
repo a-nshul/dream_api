@@ -40,60 +40,18 @@ const processResult = asyncHandler(async (req, res) => {
         for (const team of teams) {
             let totalPoints = 0;
             for (const player of team.players) {
-                const playerName = player.name;
-                const playerStats = matchResults[playerName];
-                if (playerStats) {
-                    let playerPoints = 0;
-                    // Calculate batting points
-                    playerPoints += playerStats.runs * 1;
-                    playerPoints += playerStats.fours * 1;
-                    playerPoints += playerStats.sixes * 2;
-                    if (playerStats.runs >= 30) {
-                        playerPoints += 4;
-                    }
-                    if (playerStats.runs >= 50) {
-                        playerPoints += 8;
-                    }
-                    if (playerStats.runs >= 100) {
-                        playerPoints += 16;
-                    }
-                    if (playerStats.dismissal === 'duck' && (player.role === 'Batter' || player.role === 'WK' || player.role === 'AR')) {
-                        playerPoints -= 2;
-                    }
-                    // Calculate bowling points
-                    playerPoints += playerStats.wickets * 25;
-                    playerPoints += playerStats.lbws * 8;
-                    if (playerStats.wickets >= 3) {
-                        playerPoints += 4;
-                    }
-                    if (playerStats.wickets >= 4) {
-                        playerPoints += 8;
-                    }
-                    if (playerStats.wickets >= 5) {
-                        playerPoints += 16;
-                    }
-                    playerPoints += playerStats.maidens * 12;
-                    // Calculate fielding points
-                    playerPoints += playerStats.catches * 8;
-                    if (playerStats.catches >= 3) {
-                        playerPoints += 4;
-                    }
-                    playerPoints += playerStats.stumpings * 12;
-                    playerPoints += playerStats.runOuts * 6;
-
-                    // Multiply points for captain and vice-captain
-                    if (playerName === team.captain) {
-                        playerPoints *= 2;
-                    } else if (playerName === team.viceCaptain) {
-                        playerPoints *= 1.5;
-                    }
-                    // Add player points to total points for the team
-                    totalPoints += playerPoints;
-                }
+                const playerPoints = calculatePlayerPoints(player, matchResults);
+                totalPoints += playerPoints;
             }
-            // Update team with total points
-            team.points = totalPoints;
-            await team.save();
+            const captain = team.players.find(player => player.name === team.captain);
+            const viceCaptain = team.players.find(player => player.name === team.viceCaptain);
+            if (captain) {
+                totalPoints += captain.points * 2;
+            }
+            if (viceCaptain) {
+                totalPoints += viceCaptain.points * 1.5;
+            }
+            await Team.findByIdAndUpdate(team._id, { points: totalPoints });
         }
         return res.status(200).json({ message: "Match results processed successfully" });
     } catch (error) {
@@ -101,15 +59,36 @@ const processResult = asyncHandler(async (req, res) => {
         return res.status(500).json({ message: "Error processing match results", error });
     }
 });
+function calculatePlayerPoints(player, matchResults) {
+    let points = 0;
+    matchResults.forEach(result => {
+        if (result.player === player.name) {
+            if (result.type === 'run') {
+                points += 1;
+            } else if (result.type === 'boundary') {
+                points += 1;
+            } else if (result.type === 'six') {
+                points += 2;
+            }
+        }
+    });
+    if (isNaN(points) || !isFinite(points)) {
+        points = 0; 
+    }
+    return points;
+}
+
 const viewResults = async (req, res) => {
     try {
-      const teams = await Team.find().sort({ points: -1 });
-      if (teams.length === 0) {
-        return res.status(404).json({ message: 'No teams found' });
-      }
-      const maxPoints = teams[0].points;
-      const winningTeams = teams.filter(team => team.points === maxPoints);
-      return res.status(200).json({ winningTeams });
+        const teams = await Team.find();
+
+        teams.forEach(team => {
+            team.totalPoints = team.players.reduce((total, player) => total + player.points, 0);
+        });
+        teams.sort((a, b) => b.totalPoints - a.totalPoints);
+        const maxPoints = teams.length > 0 ? teams[0].totalPoints : 0;
+        const winningTeams = teams.filter(team => team.totalPoints === maxPoints);
+        return res.status(200).json({ message: "Team results retrieved successfully", winningTeams });
     } catch (error) {
       console.log(error.message);
       return res.status(500).json({ message: "Error viewing team results", error });

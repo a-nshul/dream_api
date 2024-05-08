@@ -46,38 +46,18 @@ const validPlayers = [
   "Tanush Kotian",
   "Keshav Maharaj"
 ];
-
 const TeamSchema = new mongoose.Schema({
     teamName: [{
-       name:{ type: String,
-        required: true,}
+        name: { type: String, required: true }
     }],
     players: [{
-        name: {
-            type: String,
-            required: true,
-            enum: validPlayers
-        },
-        role: {
-            type: String,
-            enum: ["batter", "bowler","WK","AR"]
-        }
+        name: { type: String, required: true, enum: validPlayers },
+        role: { type: String, enum: ["batter", "bowler", "WK", "AR"] },
+        points: { type: Number, default: 0 } 
     }],
-    captain: {
-        type: String,
-        required: true,
-        enum:validPlayers
-
-    },
-    viceCaptain: {
-        type: String,
-        required: true,
-        // enum:validPlayers
-    },
-    points: {
-        type: Number,
-        default: 0
-    }
+    captain: { type: String, required: true, enum: validPlayers },
+    viceCaptain: { type: String, required: true, enum: validPlayers },
+    points: { type: Number, default: 0 } 
 }, { timestamps: true });
 
 const Team = mongoose.model('Team', TeamSchema);
