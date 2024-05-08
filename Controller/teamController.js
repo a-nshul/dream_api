@@ -94,4 +94,5 @@ const viewResults = async (req, res) => {
       return res.status(500).json({ message: "Error viewing team results", error });
     }
   };
+  
 module.exports = { addTeam,processResult,viewResults };
